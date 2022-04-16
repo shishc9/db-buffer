@@ -84,4 +84,10 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
     public void clear() {
 
     }
+
+    public void showLRUList() {
+        for (LRUReplacer<K, V> cache : cacheSegments) {
+            cache.showLRUList();
+        }
+    }
 }
