@@ -89,6 +89,11 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
         return cache.containsKey(key);
     }
 
+    @Override
+    public V getWithoutMove(K key) {
+        return cache.get(key).value;
+    }
+
     private void freqInc(LFUNode<K, V> node) {
         int freq = node.freq;
         LinkedHashSet<LFUNode<K, V>> set = freqMap.get(freq);

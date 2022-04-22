@@ -22,6 +22,11 @@ public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public V getWithoutMove(K key) {
+        return null;
+    }
+
+    @Override
     public Integer getMaxMemorySize() {
         return null;
     }

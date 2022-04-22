@@ -106,6 +106,19 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
 
     @Override
     public Boolean contains(K key) {
+        V value = getWithoutMove(key);
+        return value != null;
+    }
+
+    @Override
+    public V getWithoutMove(K key) {
+        Node<K, V> cur = head;
+        while (cur != null && cur.key != key) {
+            cur = cur.next;
+        }
+        if (cur != null) {
+            return cur.value;
+        }
         return null;
     }
 

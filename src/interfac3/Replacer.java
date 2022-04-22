@@ -8,6 +8,8 @@ public interface Replacer<K, V> {
 
     Boolean contains(K key);
 
+    V getWithoutMove(K key);
+
     Integer getMaxMemorySize();
 
     Integer getMemorySize();

@@ -110,6 +110,11 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public V getWithoutMove(K key) {
+        return map.get(key).value;
+    }
+
+    @Override
     public Integer getMaxMemorySize() {
         return this.maxCapacity;
     }
