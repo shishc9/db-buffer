@@ -67,7 +67,7 @@ public class DBFile {
      * @param runSize 指定大小.
      * @return 第一个可用的页号.
      */
-    public Integer allocatePages(Integer runSize) throws IOException{
+    public Integer allocatePages(Integer runSize) throws IOException {
         // 参数检查
         if (runSize <= 0) {
             throw new NonPositiveRunSizeException();
@@ -104,12 +104,36 @@ public class DBFile {
     }
 
     /**
-     * 写入页号为pageNum的页面page.
-     * @param pageNum 页号
-     * @param page 页面数据
-     * @throws IOException
+     * 从起始页开始，偏移量为runSize的页面全部归为未分配状态.
+     * @param startPageNum 起始页.
+     * @param runSize 偏移量.
      */
-    public void writePage(Integer pageNum, Page page) throws IOException{
+    public void deallocatePages(Integer startPageNum, Integer runSize) throws IOException {
+        // 参数校验
+        if (runSize < 0) {
+            throw new NonPositiveRunSizeException();
+        }
+        if (startPageNum < 0 || startPageNum >= numPages || startPageNum + runSize > numPages) {
+            throw new IllegalPageNumberException();
+        }
+
+        byte[] mapUpdate = new byte[runSize];
+        // runSize大小的全0数组.
+        Arrays.fill(mapUpdate, (byte) 0);
+        RandomAccessFile mapFile = new RandomAccessFile(mapFileName, "rw");
+        mapFile.seek(startPageNum);
+        mapFile.write(mapUpdate);
+        mapFile.close();
+
+        //TODO: .db文件的page也该删除.
+    }
+
+    /**
+     * 写入页号为pageNum的页面page.
+     * @param pageNum 页号.
+     * @param page 页面数据.
+     */
+    public void writePage(Integer pageNum, Page page) throws IOException {
         // 参数检验
         if (numPages == 0) {
             throw new EmptyFileException();
@@ -132,6 +156,32 @@ public class DBFile {
         RandomAccessFile dataFile = new RandomAccessFile(dataFileName, "rw");
         dataFile.seek(pageNum * Page.PAGE_SIZE);
         dataFile.write(page.data);
+        dataFile.close();
+    }
+
+    /**
+     * 读取页号为pageNum的页面并写入到page.data中.
+     * @param pageNum 页号.
+     * @param page 待写入页面.
+     */
+    public void readPage(Integer pageNum, Page page) throws IOException {
+        if (pageNum < 0 || pageNum > numPages) {
+            throw new IllegalPageNumberException();
+        }
+
+        RandomAccessFile mapFile = new RandomAccessFile(mapFileName, "r");
+        mapFile.seek(pageNum);
+        byte[] map = new byte[1];
+        mapFile.readFully(map);
+        // 确保该页面已经分配.
+        if (map[0] == 0) {
+            throw new PageNotAllocatedException();
+        }
+        mapFile.close();
+
+        RandomAccessFile dataFile = new RandomAccessFile(dataFileName, "r");
+        dataFile.seek(pageNum * Page.PAGE_SIZE);
+        dataFile.readFully(page.data);
         dataFile.close();
     }
 }
