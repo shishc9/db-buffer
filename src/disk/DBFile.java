@@ -10,6 +10,19 @@ import java.util.Arrays;
 public class DBFile {
 
     private String dataFileName;
+
+    public String getDataFileName() {
+        return dataFileName;
+    }
+
+    public String getMapFileName() {
+        return mapFileName;
+    }
+
+    public Integer getNumPages() {
+        return numPages;
+    }
+
     private String mapFileName;
     private Integer numPages;
 
