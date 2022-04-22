@@ -84,6 +84,11 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
         }
     }
 
+    @Override
+    public Boolean contains(K key) {
+        return cache.containsKey(key);
+    }
+
     private void freqInc(LFUNode<K, V> node) {
         int freq = node.freq;
         LinkedHashSet<LFUNode<K, V>> set = freqMap.get(freq);

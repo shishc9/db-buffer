@@ -67,6 +67,11 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
     }
 
     @Override
+    public Boolean contains(K key) {
+        return getSegmentCacheByIndex(key).contains(key);
+    }
+
+    @Override
     public Integer getMaxMemorySize() {
         return maxCapacity;
     }

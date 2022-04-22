@@ -105,6 +105,11 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public Boolean contains(K key) {
+        return null;
+    }
+
+    @Override
     public Integer getMaxMemorySize() {
         return maxCapacity;
     }

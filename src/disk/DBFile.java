@@ -10,6 +10,8 @@ import java.util.Arrays;
 public class DBFile {
 
     private String dataFileName;
+    private String mapFileName;
+    private Integer numPages;
 
     public String getDataFileName() {
         return dataFileName;
@@ -22,9 +24,6 @@ public class DBFile {
     public Integer getNumPages() {
         return numPages;
     }
-
-    private String mapFileName;
-    private Integer numPages;
 
     /**
      * 创建指定页数的数据库，且这个数据库的页数永远不会改变.

@@ -105,6 +105,11 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public Boolean contains(K key) {
+        return map.containsKey(key);
+    }
+
+    @Override
     public Integer getMaxMemorySize() {
         return this.maxCapacity;
     }

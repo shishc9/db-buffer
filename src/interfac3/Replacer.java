@@ -6,6 +6,8 @@ public interface Replacer<K, V> {
 
     V put(K key, V value);
 
+    Boolean contains(K key);
+
     Integer getMaxMemorySize();
 
     Integer getMemorySize();
