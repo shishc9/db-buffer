@@ -3,12 +3,14 @@ package replacer;
 public class Node<K, V> {
     public K key;
     public V value;
+    public FrameDescriptor nodeStatus;
     public Node<K, V> pre, next;
 
     public Node() {}
     public Node(K key, V value) {
         this.key = key;
         this.value = value;
+        nodeStatus = new FrameDescriptor();
     }
 
 //    public Node<K, V> getPre() {
