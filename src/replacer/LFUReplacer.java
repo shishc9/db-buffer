@@ -2,9 +2,7 @@ package replacer;
 
 import interfac3.Replacer;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -122,6 +120,14 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
 
     }
 
+    public void showLFUList() {
+        ArrayList<String> resultList = new ArrayList<>();
+        for (Map.Entry<K, LFUNode<K, V>> entry : cache.entrySet()) {
+            resultList.add(entry.getValue().toString());
+        }
+        System.out.println(resultList);
+    }
+
     public static class LFUNode<K, V> {
         K key;
         V value;
@@ -131,6 +137,11 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
         public LFUNode(K key, V value) {
             this.key = key;
             this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "key:" + key + " value:" + value + " freq:" + freq;
         }
     }
 }
