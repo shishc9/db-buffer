@@ -3,6 +3,7 @@ package replacer;
 import interfac3.Replacer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -81,24 +82,51 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
         }
     }
 
+    //TODO: V.type = Node; 实际添加一个V的时候要同步Node中的key，实际key就是PageID.
+    //后续考虑要不要修改 K V类型.
     @Override
-    public V put(K key, V value) {
+    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
-            V v = get(key);
+            V v = getWithoutMove(key);
             Node<K, V> node = new Node<>(key, value);
             if (v == null) {
                 if (getMemorySize() >= maxCapacity) {
-                    curSize.decrementAndGet();
-                    removeNode(head);
+                    Node<K, V> curNode = head;
+                    while (frameTable.get(curNode.key).isPinned() || frameTable.get(curNode.key).getPinCount().intValue() > 0) {
+                        curNode = curNode.next;
+                    }
+                    removeNode(curNode);
+                    addNode(node);
+                } else {
+                    addNode(node);
+                    curSize.incrementAndGet();
+                    return value;
                 }
-                addNode(node);
             } else {
                 removeNode(node);
                 addNode(node);
+                return value;
             }
-            curSize.incrementAndGet();
-            return value;
+        } finally {
+            writeLock.unlock();
+        }
+        return null;
+    }
+
+    @Override
+    public V remove(K key, HashMap<Integer, FrameDescriptor> frameTable) {
+        writeLock.lock();
+        try {
+            Node<K, V> curNode = head;
+            while (curNode.key != key) {
+                curNode = curNode.next;
+            }
+            if (!frameTable.get(key).isPinned() && frameTable.get(key).getPinCount().intValue() == 0) {
+                removeNode(curNode);
+                return curNode.value;
+            }
+            return null;
         } finally {
             writeLock.unlock();
         }

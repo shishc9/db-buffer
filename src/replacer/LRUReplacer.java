@@ -80,7 +80,7 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
-    public V put(K key, V value) {
+    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
             if (map.containsKey(key)) {
@@ -89,19 +89,36 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
                 removeNode(node);
                 addNode(node);
                 return node.value;
-            } else {
-                if (getMemorySize() >= maxCapacity) {
-                    map.remove(head.key);
-                    removeNode(head);
-                }
-                Node<K, V> node = new Node<>(key, value);
-                addNode(node);
-                map.put(key, node);
-                return node.value;
             }
+            if (getMemorySize() >= maxCapacity) {
+                Node<K, V> cur = head;
+                while (frameTable.get(cur.key).isPinned()) {
+                    cur = cur.next;
+                }
+                map.remove(cur.key);
+                removeNode(cur);
+            }
+            Node<K, V> node = new Node<>(key, value);
+            addNode(node);
+            map.put(key, node);
+            return node.value;
         } finally {
             writeLock.unlock();
         }
+    }
+
+    @Override
+    public V remove(K key, HashMap<Integer, FrameDescriptor> frameTable) {
+        if (frameTable.containsKey(key)) {
+            if (frameTable.get(key).isPinned() || frameTable.get(key).getPinCount().intValue() > 0) {
+                return null;
+            }
+            V value = map.get(key).value;
+            removeNode(map.get(key));
+            map.remove(key);
+            return value;
+        }
+        return null;
     }
 
     @Override

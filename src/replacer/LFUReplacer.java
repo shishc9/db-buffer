@@ -34,7 +34,7 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
         minFreq = 1;
     }
 
-    private LFUNode<K, V> removeNode() {
+    private LFUNode<K, V> removeNode(HashMap<Integer, FrameDescriptor> frameTable) {
         LinkedHashSet<LFUNode<K, V>> set = freqMap.get(minFreq);
         LFUNode<K, V> deadNode = set.iterator().next();
         set.remove(deadNode);
@@ -56,8 +56,9 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
         }
     }
 
+    // TODO:
     @Override
-    public V put(K key, V value) {
+    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
             if (capacity == 0) {
@@ -69,20 +70,63 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
                 freqInc(node);
             } else {
                 if (Objects.equals(size, capacity)) {
-                    LFUNode<K, V> deadNode = removeNode();
-                    cache.remove(deadNode.key);
-                    size --;
+                    LFUNode<K, V> deadNode = removeNode(frameTable);
                 }
-                LFUNode<K, V> newNode = new LFUNode<>(key, value);
-                cache.put(key, newNode);
-                addNode(newNode);
-                size ++;
             }
-            return value;
         } finally {
             writeLock.unlock();
         }
+        return null;
     }
+
+    //TODO: 可能会有bug.
+    @Override
+    public V remove(K key, HashMap<Integer, FrameDescriptor> frameTable) {
+        if (!frameTable.get(key).isPinned() && frameTable.get(key).getPinCount().intValue() == 0) {
+            LFUNode<K, V> node = cache.get(key);
+            cache.remove(key, cache.get(key));
+            int freq = node.freq;
+            LinkedHashSet<LFUNode<K, V>> set = freqMap.get(freq);
+            set.remove(node);
+            if (freq == minFreq && set.size() == 0) {
+                if (cache.size() == 0) {
+                    minFreq = 0;
+                } else {
+                    minFreq = freq + 1;
+                }
+            }
+            return node.value;
+        }
+        return null;
+    }
+
+//    @Override
+//    public V put(K key, V value) {
+//        writeLock.lock();
+//        try {
+//            if (capacity == 0) {
+//                return null;
+//            }
+//            LFUNode<K, V> node = cache.get(key);
+//            if (node != null) {
+//                node.value = value;
+//                freqInc(node);
+//            } else {
+//                if (Objects.equals(size, capacity)) {
+//                    LFUNode<K, V> deadNode = removeNode();
+//                    cache.remove(deadNode.key);
+//                    size --;
+//                }
+//                LFUNode<K, V> newNode = new LFUNode<>(key, value);
+//                cache.put(key, newNode);
+//                addNode(newNode);
+//                size ++;
+//            }
+//            return value;
+//        } finally {
+//            writeLock.unlock();
+//        }
+//    }
 
     @Override
     public Boolean contains(K key) {

@@ -2,6 +2,8 @@ package replacer;
 
 import interfac3.Replacer;
 
+import java.util.HashMap;
+
 public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
 
 
@@ -12,9 +14,19 @@ public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
-    public V put(K key, V value) {
+    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         return null;
     }
+
+    @Override
+    public V remove(K key, HashMap<Integer, FrameDescriptor> frameTable) {
+        return null;
+    }
+
+//    @Override
+//    public V put(K key, V value) {
+//        return null;
+//    }
 
     @Override
     public Boolean contains(K key) {
