@@ -1,6 +1,7 @@
 package replacer;
 
 import interfac3.Replacer;
+import interfac3.PutVO;
 
 import java.util.HashMap;
 
@@ -14,7 +15,7 @@ public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
-    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
+    public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         return null;
     }
 

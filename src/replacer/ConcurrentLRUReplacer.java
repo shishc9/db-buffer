@@ -1,6 +1,7 @@
 package replacer;
 
 import interfac3.Replacer;
+import interfac3.PutVO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,9 +63,8 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
     }
 
     @Override
-    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
-        getSegmentCacheByIndex(key).put(key, value, frameTable);
-        return value;
+    public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
+        return getSegmentCacheByIndex(key).put(key, value, frameTable);
     }
 
     @Override

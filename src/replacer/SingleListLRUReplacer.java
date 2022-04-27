@@ -1,6 +1,7 @@
 package replacer;
 
 import interfac3.Replacer;
+import interfac3.PutVO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,7 +86,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     //TODO: V.type = Node; 实际添加一个V的时候要同步Node中的key，实际key就是PageID.
     //后续考虑要不要修改 K V类型.
     @Override
-    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
+    public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
             V v = getWithoutMove(key);
@@ -98,20 +99,20 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
                     }
                     removeNode(curNode);
                     addNode(node);
+                    return new PutVO<>(curNode.key, curNode.value, null);
                 } else {
                     addNode(node);
                     curSize.incrementAndGet();
-                    return value;
+                    return new PutVO<>(null, null, "ADD_NODE");
                 }
             } else {
                 removeNode(node);
                 addNode(node);
-                return value;
+                return new PutVO<>(null, null, "KEY_IN_POOL");
             }
         } finally {
             writeLock.unlock();
         }
-        return null;
     }
 
     @Override

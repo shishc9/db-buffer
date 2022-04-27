@@ -1,6 +1,7 @@
 package replacer;
 
 import interfac3.Replacer;
+import interfac3.PutVO;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -58,25 +59,37 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
 
     // TODO:
     @Override
-    public V put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
+    public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
+            PutVO putVO = null;
             if (capacity == 0) {
-                return null;
+                return putVO;
             }
             LFUNode<K, V> node = cache.get(key);
             if (node != null) {
                 node.value = value;
                 freqInc(node);
+                putVO = new PutVO<>(null, null, "KEY_IN_POOL");
+                return putVO;
             } else {
                 if (Objects.equals(size, capacity)) {
                     LFUNode<K, V> deadNode = removeNode(frameTable);
+                    putVO = new PutVO<>(deadNode.key, deadNode.value, null);
+                    LFUNode<K, V> newNode = new LFUNode<>(key, value);
+                    cache.put(key, newNode);
+                    addNode(newNode);
+                    return putVO;
                 }
+                LFUNode<K, V> newNode = new LFUNode<>(key, value);
+                cache.put(key, newNode);
+                addNode(newNode);
+                putVO = new PutVO<>(null, null, "ADD_NODE");
+                return putVO;
             }
         } finally {
             writeLock.unlock();
         }
-        return null;
     }
 
     //TODO: 可能会有bug.
