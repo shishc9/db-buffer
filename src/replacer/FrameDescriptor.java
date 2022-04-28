@@ -10,7 +10,7 @@ public class FrameDescriptor {
         pinCount = new AtomicInteger(0);
         fileName = null;
         isDirty = false;
-        pinned = true;
+        pinned = false;
         pageNum = INVALID_PAGE;
     }
 

@@ -25,4 +25,13 @@ public class PutVO<X, Y> {
     public String getMsg() {
         return msg;
     }
+
+    @Override
+    public String toString() {
+        return "PutVO{" +
+                "key=" + key +
+                ", value=" + value +
+                ", msg='" + msg + '\'' +
+                '}';
+    }
 }

@@ -4,6 +4,7 @@ import interfac3.Replacer;
 import interfac3.PutVO;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -81,6 +82,9 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
         }
     }
 
+    /**
+     * LRU添加一个键值对.
+     */
     @Override
     public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
@@ -130,9 +134,12 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
             if (frameTable.get(key).isPinned() || frameTable.get(key).getPinCount().intValue() > 0) {
                 return null;
             }
+            // 该页没有被固定或者没有被访问.
             V value = map.get(key).value;
             removeNode(map.get(key));
             map.remove(key);
+            // 同时在frameTable中删除该页.
+            frameTable.remove(key);
             return value;
         }
         return null;
@@ -145,6 +152,9 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
 
     @Override
     public V getWithoutMove(K key) {
+        if (map.get(key) == null) {
+            return null;
+        }
         return map.get(key).value;
     }
 
