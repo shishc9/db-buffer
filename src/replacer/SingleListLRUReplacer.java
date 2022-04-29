@@ -49,8 +49,11 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
             return true;
         }
 
+        // 如果要删除节点是头节点，移除头节点并清空next.
         if (head.key.equals(node.key) && head.value.equals(node.value)) {
+            Node<K, V> cur = head;
             head = head.next;
+            cur.next = null;
             return true;
         }
 
@@ -63,6 +66,9 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
         return true;
     }
 
+    /**
+     * 获取一个K, V
+     */
     @Override
     public V get(K key) {
         writeLock.lock();
@@ -75,6 +81,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
             if (cur != null) {
                 returnValue = cur.value;
             }
+            // 找到当前节点进行移除并添加，即将其移到链尾.
             removeNode(cur);
             addNode(cur);
             return returnValue;
@@ -83,31 +90,30 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
         }
     }
 
-    //TODO: V.type = Node; 实际添加一个V的时候要同步Node中的key，实际key就是PageID.
-    //后续考虑要不要修改 K V类型.
+
     @Override
     public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
-            V v = getWithoutMove(key);
-            Node<K, V> node = new Node<>(key, value);
-            if (v == null) {
+            Node<K, V> node = getNodeWithoutMove(key);
+            Node<K, V> newNode = new Node<>(key, value);
+            if (node == null) {
                 if (getMemorySize() >= maxCapacity) {
                     Node<K, V> curNode = head;
                     while (frameTable.get(curNode.key).isPinned() || frameTable.get(curNode.key).getPinCount().intValue() > 0) {
                         curNode = curNode.next;
                     }
                     removeNode(curNode);
-                    addNode(node);
+                    addNode(newNode);
                     return new PutVO<>(curNode.key, curNode.value, null);
                 } else {
-                    addNode(node);
+                    addNode(newNode);
                     curSize.incrementAndGet();
                     return new PutVO<>(null, null, "ADD_NODE");
                 }
             } else {
                 removeNode(node);
-                addNode(node);
+                addNode(newNode);
                 return new PutVO<>(null, null, "KEY_IN_POOL");
             }
         } finally {
@@ -125,6 +131,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
             }
             if (!frameTable.get(key).isPinned() && frameTable.get(key).getPinCount().intValue() == 0) {
                 removeNode(curNode);
+                curSize.decrementAndGet();
                 return curNode.value;
             }
             return null;
@@ -137,6 +144,17 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     public Boolean contains(K key) {
         V value = getWithoutMove(key);
         return value != null;
+    }
+
+    /**
+     * 通过key获取单链表中节点的method.
+     */
+    private Node<K, V> getNodeWithoutMove(K key) {
+        Node<K, V> cur = head;
+        while (cur != null && cur.key != key) {
+            cur = cur.next;
+        }
+        return cur;
     }
 
     @Override
