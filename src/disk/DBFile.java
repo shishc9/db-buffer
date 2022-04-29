@@ -137,7 +137,7 @@ public class DBFile {
         mapFile.write(mapUpdate);
         mapFile.close();
 
-        //TODO: .db文件的page也该删除.
+        //TODO: .db文件的page也该删除. 也可以不删除反正会重写.
     }
 
     /**
