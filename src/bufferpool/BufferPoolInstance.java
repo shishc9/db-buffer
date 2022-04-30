@@ -12,6 +12,7 @@ import interfac3.Replacer;
 import replacer.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -94,13 +95,13 @@ public class BufferPoolInstance {
      * @param pageNum 数据页大小
      * @return 页号&page
      */
-    public Pair<Integer, Page> newPage(int pageNum) throws IOException {
+    public Pair<Integer, Page> newPage(int pageNum, String data) throws IOException {
         // 如果缓存已满，应该进行页面替换.
         if (frameTable.size() == replacer.getMaxMemorySize()) {
             return null;
         }
         Integer pageId = dbFile.allocatePages(pageNum);
-        Page page = pinPage(pageId, false);
+        Page page = pinPage(pageId, false, data);
         Pair<Integer, Page> pair = new Pair<>(pageId, page);
         return pair;
     }
@@ -141,6 +142,7 @@ public class BufferPoolInstance {
                 frameDescriptor.setDirty(false);
                 frameTable.put(pageNum, frameDescriptor);
             }
+            System.out.println("flush page number:" + pageNum);
         }
     }
 
@@ -159,6 +161,7 @@ public class BufferPoolInstance {
                 frameDescriptor.setDirty(false);
                 frameTable.put(pageNum, frameDescriptor);
             }
+            System.out.println("flush page number:" + pageNum);
         }
     }
 
@@ -167,6 +170,7 @@ public class BufferPoolInstance {
      * 刷新完成更新frameTable状态.
      */
     public void flushPages() throws IOException {
+        System.out.println("flush all pages.");
         for(Map.Entry<Integer, FrameDescriptor> entry : frameTable.entrySet()) {
             // entry合法，pageId对应页为脏页且该页存在于缓存池中.
             if (entry != null && entry.getValue().isDirty() && replacer.contains(entry.getKey())) {
@@ -176,25 +180,33 @@ public class BufferPoolInstance {
         }
     }
 
-    public Page pinPage(int pinPageId, boolean empty) throws IOException {
+    public Page pinPage(int pinPageId, boolean empty, String data) throws IOException {
         Page curPage;
         if (checkInPoolOrNot(pinPageId)) {
             frameTable.get(pinPageId).increasePinCount();
-            return replacer.getWithoutMove(pinPageId);
+            if (data != null) {
+                frameTable.get(pinPageId).setDirty(true);
+                replacer.put(pinPageId, new Page(data.getBytes(StandardCharsets.UTF_8)), frameTable);
+            }
+            return replacer.get(pinPageId);
         }
         if (frameTable.size() == replacer.getMemorySize() && Objects.equals(replacer.getMemorySize(), replacer.getMaxMemorySize())) {
             // 这个id应该由replacer来决定，将frameTable状态传入replacer中，返回待删除的pageId.
             Integer pageIdReplace = -1;
             curPage = new Page();
-            // TODO: 这里的empty什么情况取另一种可能性.
+
             if (!empty) {
                 dbFile.readPage(pinPageId, curPage);
+            } else {
+                curPage.data = data.getBytes(StandardCharsets.UTF_8);
             }
 
             PutVO putVO = replacer.put(pinPageId, curPage, frameTable);
             pageIdReplace = (Integer) putVO.getKey();
 
+
             if (pageIdReplace != null) {
+                frameTable.get(pageIdReplace).setDirty(true);
                 flushPage(pageIdReplace, (Page) putVO.getValue());
             }
 
@@ -204,34 +216,51 @@ public class BufferPoolInstance {
             frameTable.put(pinPageId, descriptor);
             return curPage;
         }
+
         curPage = new Page();
         if (!empty) {
             dbFile.readPage(pinPageId, curPage);
+        } else {
+            curPage.data = data.getBytes(StandardCharsets.UTF_8);
         }
+
         PutVO putVO = replacer.put(pinPageId, curPage, frameTable);
-        if (putVO.getKey() == null) {
+        if (putVO.getKey() == null && putVO.getMsg().equals("ADD_NODE")) {
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             frameTable.put(pinPageId, descriptor);
+        } else if (putVO.getKey() == null && putVO.getMsg().equals("KEY_IN_POOL")) {
+            FrameDescriptor descriptor = frameTable.get(pinPageId);
+            descriptor.setDirty(true);
+            frameTable.put(pinPageId, descriptor);
+        } else if (putVO.getKey() != null) {
+            frameTable.remove(putVO.getKey(), putVO.getValue());
+            FrameDescriptor descriptor = new FrameDescriptor();
+            descriptor.setPageNum(pinPageId);
+            frameTable.put(pinPageId, descriptor);
+            System.out.println("frameTable remove key:" + putVO.getKey());
         }
+
         return curPage;
     }
 
     /**
      * @param unPinPageId
-     * @param dirty
      */
-    public void unPinPage(int unPinPageId, boolean dirty) {
+    public void unPinPage(int unPinPageId) throws IOException {
         FrameDescriptor descriptor = frameTable.get(unPinPageId);
         if (descriptor != null) {
             if (descriptor.getPinCount().intValue() > 0) {
                 descriptor.decreasePinCount();
+                frameTable.put(unPinPageId, descriptor);
             } else if (descriptor.getPinCount().intValue() == 0) {
                 descriptor.setPinned(false);
+                descriptor.setDirty(true);
+                frameTable.put(unPinPageId, descriptor);
+                flushPage(unPinPageId);
             } else {
                 throw new PageNotPinnedException();
             }
-            //TODO: 可能需要同步descriptor的状态.
         }
     }
 

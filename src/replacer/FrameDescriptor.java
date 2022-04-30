@@ -8,25 +8,15 @@ public class FrameDescriptor {
 
     public FrameDescriptor() {
         pinCount = new AtomicInteger(0);
-        fileName = null;
         isDirty = false;
         pinned = false;
         pageNum = INVALID_PAGE;
     }
 
-    private String fileName;
     private Integer pageNum;
     private AtomicInteger pinCount;
     private boolean isDirty;
     private boolean pinned;
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
 
     public Integer getPageNum() {
         return pageNum;
