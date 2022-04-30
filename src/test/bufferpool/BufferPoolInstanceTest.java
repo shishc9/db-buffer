@@ -9,7 +9,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class BufferPoolInstanceTest {
 
@@ -34,7 +33,7 @@ public class BufferPoolInstanceTest {
                 "Walking down Bristol Street, the crowds upon the pavement were fields of harvest wheat."
         };
 
-        for (int i = 0; i < dataStrArr.length; i++) {
+        for (int i = 0; i < dataStrArr.length - 1; i++) {
             Integer pageId = dbFile.allocatePages(1);
             dbFile.writePage(pageId, new Page(dataStrArr[i].getBytes(StandardCharsets.UTF_8)));
             pageIdList.add(pageId);
@@ -63,6 +62,18 @@ public class BufferPoolInstanceTest {
         bufferPoolInstance.flushPage(2);
         bufferPoolInstance.pinPage(4, true, "page 4");
         bufferPoolInstance.showBufferPoolStatus();
+    }
+
+    /**
+     * test newPage(), freePage().
+     */
+    @Test
+    public void test02() throws IOException {
+        bufferPoolInstance.newPage(1, "new page 1");
+        bufferPoolInstance.flushPages();
+        bufferPoolInstance.showBufferPoolStatus();
+        System.out.println("pageIdList:" + pageIdList);
+        bufferPoolInstance.freePage(4);
     }
 
 }

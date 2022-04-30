@@ -101,7 +101,12 @@ public class BufferPoolInstance {
             return null;
         }
         Integer pageId = dbFile.allocatePages(pageNum);
-        Page page = pinPage(pageId, false, data);
+        Page page;
+        if (data != null) {
+            page = pinPage(pageId, true, data);
+        } else {
+            page = pinPage(pageId, false, null);
+        }
         Pair<Integer, Page> pair = new Pair<>(pageId, page);
         return pair;
     }
@@ -113,6 +118,9 @@ public class BufferPoolInstance {
     public void freePage(int pageId) throws IOException {
         // 在缓存中.
         FrameDescriptor descriptor = frameTable.get(pageId);
+        if (descriptor == null) {
+            throw new IllegalPageNumberException();
+        }
         // 当前删除页面正在被访问，则抛出异常.
         if (descriptor.isPinned() || descriptor.getPinCount().intValue() > 0) {
             throw new PagePinnedException();
@@ -173,7 +181,7 @@ public class BufferPoolInstance {
         System.out.println("flush all pages.");
         for(Map.Entry<Integer, FrameDescriptor> entry : frameTable.entrySet()) {
             // entry合法，pageId对应页为脏页且该页存在于缓存池中.
-            if (entry != null && entry.getValue().isDirty() && replacer.contains(entry.getKey())) {
+            if (entry != null && replacer.contains(entry.getKey())) {
                 dbFile.writePage(entry.getKey(), replacer.getWithoutMove(entry.getKey()));
                 entry.getValue().setDirty(false);
             }
@@ -203,7 +211,6 @@ public class BufferPoolInstance {
 
             PutVO putVO = replacer.put(pinPageId, curPage, frameTable);
             pageIdReplace = (Integer) putVO.getKey();
-
 
             if (pageIdReplace != null) {
                 frameTable.get(pageIdReplace).setDirty(true);
@@ -258,6 +265,7 @@ public class BufferPoolInstance {
                 descriptor.setDirty(true);
                 frameTable.put(unPinPageId, descriptor);
                 flushPage(unPinPageId);
+                removeFromBufferPool(unPinPageId);
             } else {
                 throw new PageNotPinnedException();
             }
@@ -282,6 +290,15 @@ public class BufferPoolInstance {
             return true;
         }
         return false;
+    }
+
+    /**
+     * 将某个页面从缓存中剔除
+     * @param pageId 要剔除的页面Id
+     */
+    private void removeFromBufferPool(Integer pageId) {
+       replacer.remove(pageId, frameTable);
+       frameTable.remove(pageId);
     }
 
     public void showBufferPoolStatus() {
