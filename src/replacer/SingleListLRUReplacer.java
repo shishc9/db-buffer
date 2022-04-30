@@ -180,17 +180,23 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public void showReplacerStatus() {
+        showLRUList();
+    }
+
+    @Override
     public void clear() {
 
     }
 
     public void showLRUList() {
         Node<K, V> cur = head;
-        ArrayList<String> result = new ArrayList<>();
+//        ArrayList<String> result = new ArrayList<>();
         while (cur != null) {
-            result.add(cur.toString());
+            System.out.println(cur);
+//            result.add(cur.toString());
             cur = cur.next;
         }
-        System.out.println(result);
+//        System.out.println(result);
     }
 }

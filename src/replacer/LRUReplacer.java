@@ -173,17 +173,23 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public void showReplacerStatus() {
+        showLRUList();
+    }
+
+    @Override
     public void clear() {
 
     }
 
     public void showLRUList() {
         Node<K, V> cur = head;
-        ArrayList<String> result = new ArrayList<>();
+//        ArrayList<String> result = new ArrayList<>();
         while (cur != null) {
-            result.add(cur.toString());
+//            result.add(cur.toString());
+            System.out.println(cur);
             cur = cur.next;
         }
-        System.out.println(result);
+//        System.out.println(result);
     }
 }

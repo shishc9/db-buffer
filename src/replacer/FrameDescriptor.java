@@ -63,4 +63,14 @@ public class FrameDescriptor {
     public void setPinned(boolean pinned) {
         this.pinned = pinned;
     }
+
+    @Override
+    public String toString() {
+        return "FrameDescriptor{" +
+                "pageNum=" + pageNum +
+                ", pinCount=" + pinCount +
+                ", isDirty=" + isDirty +
+                ", pinned=" + pinned +
+                '}';
+    }
 }

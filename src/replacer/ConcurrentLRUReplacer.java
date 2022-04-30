@@ -97,6 +97,13 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
     }
 
     @Override
+    public void showReplacerStatus() {
+        for (LRUReplacer<K, V> replacer : cacheSegments) {
+            replacer.showReplacerStatus();
+        }
+    }
+
+    @Override
     public void clear() {
 
     }

@@ -50,6 +50,11 @@ public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public void showReplacerStatus() {
+
+    }
+
+    @Override
     public void clear() {
 
     }

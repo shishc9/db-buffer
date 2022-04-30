@@ -26,5 +26,7 @@ public interface Replacer<K, V> {
 
     Integer getMemorySize();
 
+    void showReplacerStatus();
+
     void clear();
 }

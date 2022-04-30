@@ -203,16 +203,24 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
     }
 
     @Override
+    public void showReplacerStatus() {
+        showLFUList();
+        showFreqList();
+    }
+
+    @Override
     public void clear() {
 
     }
 
     public void showLFUList() {
-        ArrayList<String> resultList = new ArrayList<>();
+        System.out.println("LFUList:");
+//        ArrayList<String> resultList = new ArrayList<>();
         for (Map.Entry<K, LFUNode<K, V>> entry : cache.entrySet()) {
-            resultList.add(entry.getValue().toString());
+            System.out.println(entry.getValue().toString());
+//            resultList.add(entry.getValue().toString());
         }
-        System.out.println(resultList);
+//        System.out.println(resultList);
     }
 
     public void showFreqList() {

@@ -19,7 +19,7 @@ public class Page {
     @Override
     public String toString() {
         return "Page{" +
-                "data=" + Arrays.toString(data) +
+                "data=" + new String(data) +
                 '}';
     }
 }

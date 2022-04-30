@@ -67,6 +67,7 @@ public class BufferPoolInstance {
                     break;
                 }
             }
+            bufferPoolInstance.frameTable = new HashMap<>(initSize);
             return this;
         }
 
@@ -176,7 +177,7 @@ public class BufferPoolInstance {
     }
 
     public Page pinPage(int pinPageId, boolean empty) throws IOException {
-        Page curPage = null;
+        Page curPage;
         if (checkInPoolOrNot(pinPageId)) {
             frameTable.get(pinPageId).increasePinCount();
             return replacer.getWithoutMove(pinPageId);
@@ -254,4 +255,12 @@ public class BufferPoolInstance {
         return false;
     }
 
+    public void showBufferPoolStatus() {
+        System.out.println("show buffer pool status: ------");
+        replacer.showReplacerStatus();
+        for (Map.Entry<Integer, FrameDescriptor> entry : frameTable.entrySet()) {
+            System.out.println("key:" + entry.getKey() + ", frameDescriptor:" + entry.getValue());
+        }
+        System.out.println("buffer pool status end. -------");
+    }
 }
