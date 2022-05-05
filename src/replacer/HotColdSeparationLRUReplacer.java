@@ -58,4 +58,9 @@ public class HotColdSeparationLRUReplacer<K, V> implements Replacer<K, V> {
     public void clear() {
 
     }
+
+    @Override
+    public Integer getHitCounts() {
+        return null;
+    }
 }

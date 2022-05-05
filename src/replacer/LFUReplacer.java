@@ -4,6 +4,7 @@ import interfac3.Replacer;
 import interfac3.PutVO;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -14,6 +15,16 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
     private HashMap<Integer, LinkedHashSet<LFUNode<K, V>>> freqMap;
     private Integer minFreq;
     private Integer capacity;
+    private AtomicInteger ioHitCount = new AtomicInteger(0);
+
+    public AtomicInteger getIoHitCount() {
+        return ioHitCount;
+    }
+
+    public void setIoHitCount(AtomicInteger ioHitCount) {
+        this.ioHitCount = ioHitCount;
+    }
+
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private Lock writeLock = lock.writeLock();
     private Lock readLock = lock.readLock();
@@ -89,6 +100,7 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
                 return null;
             }
             freqInc(node);
+            ioHitCount.incrementAndGet();
             return node.value;
         } finally {
             writeLock.unlock();
@@ -111,6 +123,7 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
                 node.value = value;
                 freqInc(node);
                 putVO = new PutVO<>(null, null, "KEY_IN_POOL");
+                ioHitCount.incrementAndGet();
                 return putVO;
             } else {
                 // 不在缓存池中，缓存已满，进行替换.
@@ -211,6 +224,11 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
     @Override
     public void clear() {
 
+    }
+
+    @Override
+    public Integer getHitCounts() {
+        return ioHitCount.intValue();
     }
 
     public void showLFUList() {

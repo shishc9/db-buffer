@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BufferPoolInstance {
 
@@ -27,6 +28,7 @@ public class BufferPoolInstance {
     private HashMap<Integer, FrameDescriptor> frameTable;
     private Replacer<Integer, Page> replacer;
     private DBFile dbFile;
+    private AtomicInteger ioCounts;
 
     // 支持的缓冲替换策略枚举类.
     public enum ReplacerEnum {
@@ -78,6 +80,7 @@ public class BufferPoolInstance {
         }
 
         public BufferPoolInstance build() {
+            bufferPoolInstance.ioCounts = new AtomicInteger(0);
             return bufferPoolInstance;
         }
     }
@@ -149,8 +152,8 @@ public class BufferPoolInstance {
                 dbFile.writePage(pageNum, page);
                 frameDescriptor.setDirty(false);
                 frameTable.put(pageNum, frameDescriptor);
+                System.out.println("flush page number:" + pageNum);
             }
-            System.out.println("flush page number:" + pageNum);
         }
     }
 
@@ -168,8 +171,8 @@ public class BufferPoolInstance {
                 dbFile.writePage(pageNum, page);
                 frameDescriptor.setDirty(false);
                 frameTable.put(pageNum, frameDescriptor);
+                System.out.println("flush page number:" + pageNum);
             }
-            System.out.println("flush page number:" + pageNum);
         }
     }
 
@@ -196,6 +199,7 @@ public class BufferPoolInstance {
                 frameTable.get(pinPageId).setDirty(true);
                 replacer.put(pinPageId, new Page(data.getBytes(StandardCharsets.UTF_8)), frameTable);
             }
+            ioCounts.incrementAndGet();
             return replacer.get(pinPageId);
         }
         if (frameTable.size() == replacer.getMemorySize() && Objects.equals(replacer.getMemorySize(), replacer.getMaxMemorySize())) {
@@ -214,13 +218,14 @@ public class BufferPoolInstance {
 
             if (pageIdReplace != null) {
                 frameTable.get(pageIdReplace).setDirty(true);
-                flushPage(pageIdReplace, (Page) putVO.getValue());
+//                flushPage(pageIdReplace, (Page) putVO.getValue());
             }
 
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             frameTable.remove(pageIdReplace);
             frameTable.put(pinPageId, descriptor);
+            ioCounts.incrementAndGet();
             return curPage;
         }
 
@@ -228,6 +233,7 @@ public class BufferPoolInstance {
         if (!empty) {
             dbFile.readPage(pinPageId, curPage);
         } else {
+            // 新建的数据页应该标记位脏页
             curPage.data = data.getBytes(StandardCharsets.UTF_8);
         }
 
@@ -245,9 +251,10 @@ public class BufferPoolInstance {
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             frameTable.put(pinPageId, descriptor);
-            System.out.println("frameTable remove key:" + putVO.getKey());
+//            System.out.println("frameTable remove key:" + putVO.getKey());
         }
 
+        ioCounts.incrementAndGet();
         return curPage;
     }
 
@@ -264,7 +271,7 @@ public class BufferPoolInstance {
                 descriptor.setPinned(false);
                 descriptor.setDirty(true);
                 frameTable.put(unPinPageId, descriptor);
-                flushPage(unPinPageId);
+//                flushPage(unPinPageId);
                 removeFromBufferPool(unPinPageId);
             } else {
                 throw new PageNotPinnedException();
@@ -279,17 +286,18 @@ public class BufferPoolInstance {
      * @throws FramePoolConsistencyException buffer frame table 和 replacer 状态不一致异常.
      */
     private boolean checkInPoolOrNot(Integer pageId) throws FramePoolConsistencyException {
-        Page page = replacer.getWithoutMove(pageId);
-        if (page == null && !frameTable.containsKey(pageId)) {
-            return false;
-        } else if (page != null && frameTable.containsKey(pageId)) {
-            // 缓冲池有该页面，frameTable有该页面，且frameTable的pageId正常.
-            if (!Objects.equals(frameTable.get(pageId).getPageNum(), pageId)) {
-                throw new FramePoolConsistencyException();
-            }
-            return true;
-        }
-        return false;
+        return replacer.contains(pageId);
+//        Page page = replacer.getWithoutMove(pageId);
+//        if (page == null && !frameTable.containsKey(pageId)) {
+//            return false;
+//        } else if (page != null && frameTable.containsKey(pageId)) {
+//            // 缓冲池有该页面，frameTable有该页面，且frameTable的pageId正常.
+//            if (!Objects.equals(frameTable.get(pageId).getPageNum(), pageId)) {
+//                throw new FramePoolConsistencyException();
+//            }
+//            return true;
+//        }
+//        return false;
     }
 
     /**
@@ -308,5 +316,9 @@ public class BufferPoolInstance {
             System.out.println("key:" + entry.getKey() + ", frameDescriptor:" + entry.getValue());
         }
         System.out.println("buffer pool status end. -------");
+    }
+
+    public float getHitRate() {
+        return (float) replacer.getHitCounts()/ ioCounts.intValue();
     }
 }

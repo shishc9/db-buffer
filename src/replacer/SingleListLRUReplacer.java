@@ -19,7 +19,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     private Node<K, V> head;
 
     private AtomicInteger ioCount;
-    private AtomicInteger ioHitCount;
+    private AtomicInteger ioHitCount = new AtomicInteger(0);
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
@@ -27,6 +27,14 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
 
     public SingleListLRUReplacer(Integer capacity) {
         maxCapacity = capacity;
+    }
+
+    public AtomicInteger getIoHitCount() {
+        return ioHitCount;
+    }
+
+    public void setIoHitCount(AtomicInteger ioHitCount) {
+        this.ioHitCount = ioHitCount;
     }
 
     private void addNode(Node<K, V> node) {
@@ -79,6 +87,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
                 cur = cur.next;
             }
             if (cur != null) {
+                ioHitCount.incrementAndGet();
                 returnValue = cur.value;
             }
             // 找到当前节点进行移除并添加，即将其移到链尾.
@@ -100,7 +109,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
             if (node == null) {
                 if (getMemorySize() >= maxCapacity) {
                     Node<K, V> curNode = head;
-                    while (frameTable.get(curNode.key).isPinned() || frameTable.get(curNode.key).getPinCount().intValue() > 0) {
+                    while (curNode != null && frameTable.get(curNode.key).isPinned() || frameTable.get(curNode.key).getPinCount().intValue() > 0) {
                         curNode = curNode.next;
                     }
                     removeNode(curNode);
@@ -112,6 +121,7 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
                     return new PutVO<>(null, null, "ADD_NODE");
                 }
             } else {
+                ioHitCount.incrementAndGet();
                 removeNode(node);
                 addNode(newNode);
                 return new PutVO<>(null, null, "KEY_IN_POOL");
@@ -187,6 +197,11 @@ public class SingleListLRUReplacer<K, V> implements Replacer<K, V> {
     @Override
     public void clear() {
 
+    }
+
+    @Override
+    public Integer getHitCounts() {
+        return ioHitCount.intValue();
     }
 
     public void showLRUList() {

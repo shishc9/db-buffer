@@ -3,7 +3,6 @@ package replacer;
 import interfac3.Replacer;
 import interfac3.PutVO;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +18,14 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
 
     private AtomicInteger ioCount;
     private AtomicInteger ioHitCount;
+
+    public AtomicInteger getIoHitCount() {
+        return ioHitCount;
+    }
+
+    public void setIoHitCount(AtomicInteger ioHitCount) {
+        this.ioHitCount = ioHitCount;
+    }
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
@@ -75,6 +82,7 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
             }
             removeNode(node);
             addNode(node);
+            ioHitCount.incrementAndGet();
             return node.value;
         } finally {
             writeLock.unlock();
@@ -95,6 +103,7 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
                 node.value = value;
                 removeNode(node);
                 addNode(node);
+                ioHitCount.incrementAndGet();
                 return new PutVO<>(null, null, "KEY_IN_POOL");
             }
             // 如果缓存空间已满，则需要发生页面替换.
@@ -180,6 +189,11 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     @Override
     public void clear() {
 
+    }
+
+    @Override
+    public Integer getHitCounts() {
+        return ioHitCount.intValue();
     }
 
     public void showLRUList() {

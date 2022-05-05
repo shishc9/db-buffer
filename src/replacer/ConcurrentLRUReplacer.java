@@ -108,6 +108,15 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
 
     }
 
+    @Override
+    public Integer getHitCounts() {
+        Integer sum = 0;
+        for (LRUReplacer<K, V> replacer : cacheSegments) {
+            sum += replacer.getHitCounts();
+        }
+        return sum;
+    }
+
     public void showLRUList() {
         for (LRUReplacer<K, V> cache : cacheSegments) {
             cache.showLRUList();

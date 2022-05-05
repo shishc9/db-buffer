@@ -29,4 +29,6 @@ public interface Replacer<K, V> {
     void showReplacerStatus();
 
     void clear();
+
+    Integer getHitCounts();
 }
