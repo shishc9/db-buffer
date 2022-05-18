@@ -82,7 +82,7 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
             }
             removeNode(node);
             addNode(node);
-            ioHitCount.incrementAndGet();
+//            ioHitCount.incrementAndGet();
             return node.value;
         } finally {
             writeLock.unlock();

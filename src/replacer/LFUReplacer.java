@@ -100,7 +100,7 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
                 return null;
             }
             freqInc(node);
-            ioHitCount.incrementAndGet();
+//            ioHitCount.incrementAndGet();
             return node.value;
         } finally {
             writeLock.unlock();

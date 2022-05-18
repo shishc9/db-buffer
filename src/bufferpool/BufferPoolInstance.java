@@ -45,9 +45,9 @@ public class BufferPoolInstance {
      */
     public static class BufferPoolBuilder {
 
-        private BufferPoolInstance bufferPoolInstance;
+        private final BufferPoolInstance bufferPoolInstance;
 
-        public BufferPoolBuilder() throws IOException {
+        public BufferPoolBuilder() {
             bufferPoolInstance = new BufferPoolInstance();
         }
 
@@ -193,20 +193,19 @@ public class BufferPoolInstance {
 
     public Page pinPage(int pinPageId, boolean empty, String data) throws IOException {
         Page curPage;
+        ioCounts.incrementAndGet();
         if (checkInPoolOrNot(pinPageId)) {
             frameTable.get(pinPageId).increasePinCount();
             if (data != null) {
                 frameTable.get(pinPageId).setDirty(true);
                 replacer.put(pinPageId, new Page(data.getBytes(StandardCharsets.UTF_8)), frameTable);
             }
-            ioCounts.incrementAndGet();
             return replacer.get(pinPageId);
         }
         if (frameTable.size() == replacer.getMemorySize() && Objects.equals(replacer.getMemorySize(), replacer.getMaxMemorySize())) {
             // 这个id应该由replacer来决定，将frameTable状态传入replacer中，返回待删除的pageId.
             Integer pageIdReplace = -1;
             curPage = new Page();
-
             if (!empty) {
                 dbFile.readPage(pinPageId, curPage);
             } else {
@@ -225,7 +224,6 @@ public class BufferPoolInstance {
             descriptor.setPageNum(pinPageId);
             frameTable.remove(pageIdReplace);
             frameTable.put(pinPageId, descriptor);
-            ioCounts.incrementAndGet();
             return curPage;
         }
 
@@ -251,17 +249,15 @@ public class BufferPoolInstance {
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             frameTable.put(pinPageId, descriptor);
-//            System.out.println("frameTable remove key:" + putVO.getKey());
         }
 
-        ioCounts.incrementAndGet();
         return curPage;
     }
 
     /**
      * @param unPinPageId
      */
-    public void unPinPage(int unPinPageId) throws IOException {
+    public void unPinPage(int unPinPageId) {
         FrameDescriptor descriptor = frameTable.get(unPinPageId);
         if (descriptor != null) {
             if (descriptor.getPinCount().intValue() > 0) {
@@ -320,5 +316,13 @@ public class BufferPoolInstance {
 
     public float getHitRate() {
         return (float) replacer.getHitCounts()/ ioCounts.intValue();
+    }
+
+    public int getHitCount() {
+        return this.ioCounts.intValue();
+    }
+
+    public int getBufferPoolSize() {
+        return replacer.getMaxMemorySize();
     }
 }

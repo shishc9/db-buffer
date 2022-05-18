@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 public class Page {
 
-    public static final int PAGE_SIZE = 1024;
+    public static final int PAGE_SIZE = 4;
 
     public byte[] data;
 
