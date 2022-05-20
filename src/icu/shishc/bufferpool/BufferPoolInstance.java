@@ -253,22 +253,6 @@ public class BufferPoolInstance {
             descriptor.setDirty(true);
             frameTable.put(pinPageId, descriptor);
         }
-//        if (putVO.getKey() == null && putVO.getMsg().equals("ADD_NODE")) {
-//            FrameDescriptor descriptor = new FrameDescriptor();
-//            descriptor.setPageNum(pinPageId);
-//            descriptor.setDirty(true);
-//            frameTable.put(pinPageId, descriptor);
-//        } else if (putVO.getKey() == null && putVO.getMsg().equals("KEY_IN_POOL")) {
-//            FrameDescriptor descriptor = frameTable.get(pinPageId);
-//            descriptor.setDirty(true);
-//            frameTable.put(pinPageId, descriptor);
-//        } else if (putVO.getKey() != null) {
-//            flushPage((Integer) putVO.getKey(), (Page) putVO.getValue());
-//            frameTable.remove(putVO.getKey(), putVO.getValue());
-//            FrameDescriptor descriptor = new FrameDescriptor();
-//            descriptor.setPageNum(pinPageId);
-//            frameTable.put(pinPageId, descriptor);
-//        }
 
         return curPage;
     }
@@ -302,7 +286,7 @@ public class BufferPoolInstance {
      * @throws FramePoolConsistencyException buffer frame table 和 icu.shishc.replacer 状态不一致异常.
      */
     private boolean checkInPoolOrNot(Integer pageId) throws FramePoolConsistencyException {
-        return replacer.contains(pageId);
+        return replacer.contains(pageId) && frameTable.containsKey(pageId);
 //        Page page = icu.shishc.replacer.getWithoutMove(pageId);
 //        if (page == null && !frameTable.containsKey(pageId)) {
 //            return false;

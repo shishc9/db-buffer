@@ -96,7 +96,7 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
     public PutVO put(K key, V value, HashMap<Integer, FrameDescriptor> frameTable) {
         writeLock.lock();
         try {
-            PutVO putVO = null;
+            PutVO putVO;
             // 如果当前页在缓存中，更新其在缓存中的位置，并将其页面内容刷新，将其标记为脏页.
             if (map.containsKey(key)) {
                 Node<K, V> node = map.get(key);
@@ -109,10 +109,9 @@ public class LRUReplacer<K, V> implements Replacer<K, V> {
             // 如果缓存空间已满，则需要发生页面替换.
             if (getMemorySize() >= maxCapacity) {
                 Node<K, V> cur = head;
-                // 找到第一个可以替换的页面，该页面靠近LRU链的首部且未被pin.
-                while (frameTable.get(cur.key).isPinned()) {
-                    cur = cur.next;
-                }
+//                while (frameTable.get(cur.key).isPinned()) {
+//                    cur = cur.next;
+//                }
                 map.remove(cur.key);
                 removeNode(cur);
                 // 返回被替换的页面和page.
