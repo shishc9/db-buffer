@@ -158,9 +158,9 @@ public class BufferPoolInstance {
 
     public void flushPage(int pageNum, Page page) throws IOException {
         // 参数校验
-        if (pageNum < 0 || pageNum > dbFile.getNumPages()) {
-            throw new IllegalPageNumberException();
-        }
+//        if (pageNum < 0 || pageNum > dbFile.getNumPages()) {
+//            throw new IllegalPageNumberException();
+//        }
 
         // 获取页面对应状态
         FrameDescriptor frameDescriptor = frameTable.get(pageNum);
@@ -227,7 +227,7 @@ public class BufferPoolInstance {
             if (pageIdReplace != null) {
                 // 将替换出的页号标记为脏页 并进行刷新.
                 frameTable.get(pageIdReplace).setDirty(true);
-                flushPage(pageIdReplace, (Page) putVO.getValue());
+//                flushPage(pageIdReplace, (Page) putVO.getValue());
                 frameTable.remove(pageIdReplace);
             }
 
@@ -252,17 +252,23 @@ public class BufferPoolInstance {
             descriptor.setPageNum(pinPageId);
             descriptor.setDirty(true);
             frameTable.put(pinPageId, descriptor);
-        } else if (putVO.getKey() == null && putVO.getMsg().equals("KEY_IN_POOL")) {
-            FrameDescriptor descriptor = frameTable.get(pinPageId);
-            descriptor.setDirty(true);
-            frameTable.put(pinPageId, descriptor);
-        } else if (putVO.getKey() != null) {
-            flushPage((Integer) putVO.getKey(), (Page) putVO.getValue());
-            frameTable.remove(putVO.getKey(), putVO.getValue());
-            FrameDescriptor descriptor = new FrameDescriptor();
-            descriptor.setPageNum(pinPageId);
-            frameTable.put(pinPageId, descriptor);
         }
+//        if (putVO.getKey() == null && putVO.getMsg().equals("ADD_NODE")) {
+//            FrameDescriptor descriptor = new FrameDescriptor();
+//            descriptor.setPageNum(pinPageId);
+//            descriptor.setDirty(true);
+//            frameTable.put(pinPageId, descriptor);
+//        } else if (putVO.getKey() == null && putVO.getMsg().equals("KEY_IN_POOL")) {
+//            FrameDescriptor descriptor = frameTable.get(pinPageId);
+//            descriptor.setDirty(true);
+//            frameTable.put(pinPageId, descriptor);
+//        } else if (putVO.getKey() != null) {
+//            flushPage((Integer) putVO.getKey(), (Page) putVO.getValue());
+//            frameTable.remove(putVO.getKey(), putVO.getValue());
+//            FrameDescriptor descriptor = new FrameDescriptor();
+//            descriptor.setPageNum(pinPageId);
+//            frameTable.put(pinPageId, descriptor);
+//        }
 
         return curPage;
     }
