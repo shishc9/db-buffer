@@ -26,7 +26,7 @@ public class BufferPoolFuncTest {
         dbFile = new DBFile("bp-func-icu.shishc.test", 10);
         pageIdList = new ArrayList<>();
         bufferPoolInstance = new BufferPoolInstance.BufferPoolBuilder()
-                .setReplacer(BufferPoolInstance.ReplacerEnum.LRUReplacer, 3)
+                .setReplacer(BufferPoolInstance.ReplacerEnum.LRUReplacer, 3, null)
                 .setDBFile("bp-func-icu.shishc.test", 10)
                 .build();
 

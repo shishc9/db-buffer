@@ -50,42 +50,46 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
     }
 
     private LFUNode<K, V> removeNode(HashMap<Integer, FrameDescriptor> frameTable) {
-        // 对freqMap的freq进行排序，因为需要剔除最小的freq节点.
-        Integer[] arr = new Integer[freqMap.size()];
-        freqMap.keySet().toArray(arr);
-        Arrays.sort(arr);
-        LFUNode<K, V> deadNode = null;
-        for (Integer freq : arr) {
-            LinkedHashSet<LFUNode<K, V>> lfuNodes = freqMap.get(freq);
-            for (LFUNode<K, V> node : lfuNodes) {
-                // 选择freq最小且未被固定的.
-                if (!frameTable.get(node.key).isPinned()) {
-                    deadNode = node;
-                    break;
-                }
-            }
-            if (deadNode != null) {
-                break;
-            }
-        }
-
-        if (deadNode != null) {
-            LinkedHashSet<LFUNode<K, V>> set = freqMap.get(deadNode.freq);
-            // freqMap和cache都删除节点.
-            set.remove(deadNode);
-            cache.remove(deadNode.key);
-            Integer freq = deadNode.freq;
-            // 该节点被删除 需要处理该节点对minFreq的可能影响.
-            if (freq == minFreq && set.size() == 0) {
-                if (cache.size() == 0) {
-                    minFreq = 0;
-                } else {
-                    minFreq = freq + 1;
-                }
-            }
-            return deadNode;
-        }
-        return null;
+//        // 对freqMap的freq进行排序，因为需要剔除最小的freq节点.
+//        Integer[] arr = new Integer[freqMap.size()];
+//        freqMap.keySet().toArray(arr);
+//        Arrays.sort(arr);
+        LinkedHashSet<LFUNode<K, V>> set = freqMap.get(minFreq);
+        LFUNode<K, V> deadNode = set.iterator().next();
+        set.remove(deadNode);
+        return deadNode;
+//        LFUNode<K, V> deadNode = null;
+//        for (Integer freq : arr) {
+//            LinkedHashSet<LFUNode<K, V>> lfuNodes = freqMap.get(freq);
+//            for (LFUNode<K, V> node : lfuNodes) {
+//                // 选择freq最小且未被固定的.
+//                if (!frameTable.get(node.key).isPinned()) {
+//                    deadNode = node;
+//                    break;
+//                }
+//            }
+//            if (deadNode != null) {
+//                break;
+//            }
+//        }
+//
+//        if (deadNode != null) {
+//            LinkedHashSet<LFUNode<K, V>> set = freqMap.get(deadNode.freq);
+//            // freqMap和cache都删除节点.
+//            set.remove(deadNode);
+//            cache.remove(deadNode.key);
+//            Integer freq = deadNode.freq;
+//            // 该节点被删除 需要处理该节点对minFreq的可能影响.
+//            if (freq == minFreq && set.size() == 0) {
+//                if (cache.size() == 0) {
+//                    minFreq = 0;
+//                } else {
+//                    minFreq = freq + 1;
+//                }
+//            }
+//            return deadNode;
+//        }
+//        return null;
     }
 
     /**
@@ -129,6 +133,7 @@ public class LFUReplacer<K, V> implements Replacer<K, V> {
                 // 不在缓存池中，缓存已满，进行替换.
                 if (Objects.equals(cache.size(), capacity)) {
                     LFUNode<K, V> deadNode = removeNode(frameTable);
+                    cache.remove(deadNode.key);
                     putVO = new PutVO<>(deadNode.key, deadNode.value, null);
                     LFUNode<K, V> newNode = new LFUNode<>(key, value);
                     cache.put(key, newNode);

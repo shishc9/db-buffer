@@ -50,7 +50,7 @@ public class BufferPoolInstance {
             bufferPoolInstance = new BufferPoolInstance();
         }
 
-        public BufferPoolBuilder setReplacer(ReplacerEnum replacerName, Integer initSize) {
+        public BufferPoolBuilder setReplacer(ReplacerEnum replacerName, Integer initSize, Integer conNum) {
             switch (replacerName) {
                 case LFUReplacer: {
                     bufferPoolInstance.replacer = new LFUReplacer<>(initSize);
@@ -65,7 +65,7 @@ public class BufferPoolInstance {
                     break;
                 }
                 case ConcurrentLRUReplacer: {
-                    bufferPoolInstance.replacer = new ConcurrentLRUReplacer<>(initSize);
+                    bufferPoolInstance.replacer = new ConcurrentLRUReplacer<>(conNum, initSize);
                     break;
                 }
             }
@@ -227,13 +227,16 @@ public class BufferPoolInstance {
             if (pageIdReplace != null) {
                 // 将替换出的页号标记为脏页 并进行刷新.
                 frameTable.get(pageIdReplace).setDirty(true);
-//                flushPage(pageIdReplace, (Page) putVO.getValue());
+                //flushPage(pageIdReplace, (Page) putVO.getValue());
                 frameTable.remove(pageIdReplace);
             }
 
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             descriptor.setDirty(true);
+            if (!empty) {
+                descriptor.setDirty(false);
+            }
             frameTable.put(pinPageId, descriptor);
             return curPage;
         }
@@ -251,6 +254,9 @@ public class BufferPoolInstance {
             FrameDescriptor descriptor = new FrameDescriptor();
             descriptor.setPageNum(pinPageId);
             descriptor.setDirty(true);
+            if (!empty) {
+                descriptor.setDirty(false);
+            }
             frameTable.put(pinPageId, descriptor);
         }
 

@@ -19,6 +19,15 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
      */
     private ArrayList<LRUReplacer<K, V>> cacheSegments;
     private final Integer maxCapacity;
+    private int concurrency = 2;
+
+    public int getConcurrency() {
+        return concurrency;
+    }
+
+    public void setConcurrency(int concurrency) {
+        this.concurrency = concurrency;
+    }
 
     public ConcurrentLRUReplacer(final int capacity) {
         maxCapacity = capacity;
@@ -35,7 +44,11 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
         }
     }
 
-    public ConcurrentLRUReplacer(final int concurrency, final int capacity) {
+    public ConcurrentLRUReplacer(Integer concurrency, final int capacity) {
+        if (concurrency == null) {
+            concurrency = Math.max(Runtime.getRuntime().availableProcessors(), 4);
+        }
+//        System.out.println("concurrency:" + concurrency);
         cacheSegments = new ArrayList<>(concurrency);
         this.maxCapacity = capacity;
         int segmentCapacity = capacity / concurrency;
@@ -49,7 +62,8 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
     }
 
     private int segmentIndex(K key) {
-        int hashCode = Math.abs(key.hashCode() * 31);
+        int h;
+        int hashCode = (h = key.hashCode()) ^ (h >>> 16);
         return hashCode % cacheSegments.size();
     }
 
