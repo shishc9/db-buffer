@@ -48,7 +48,6 @@ public class ConcurrentLRUReplacer<K,V> implements Replacer<K,V> {
         if (concurrency == null) {
             concurrency = Math.max(Runtime.getRuntime().availableProcessors(), 4);
         }
-//        System.out.println("concurrency:" + concurrency);
         cacheSegments = new ArrayList<>(concurrency);
         this.maxCapacity = capacity;
         int segmentCapacity = capacity / concurrency;

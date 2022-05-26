@@ -227,6 +227,7 @@ public class BufferPoolInstance {
             if (pageIdReplace != null) {
                 // 将替换出的页号标记为脏页 并进行刷新.
                 frameTable.get(pageIdReplace).setDirty(true);
+                // 数据集测试注释掉本代码
                 //flushPage(pageIdReplace, (Page) putVO.getValue());
                 frameTable.remove(pageIdReplace);
             }
